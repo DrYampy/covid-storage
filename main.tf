@@ -3,6 +3,6 @@ resource "google_storage_bucket" "covid_storage" {
   project = "yampy-covid-${var.stage}"
   location      = "US-WEST1"
   force_destroy = true
-  storage_class = 'STANDARD'
+  storage_class = "STANDARD"
   uniform_bucket_level_access = true
 }
