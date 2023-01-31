@@ -1,0 +1,73 @@
+version: 2.1
+#orbs:
+#  terraform: circleci/terraform@3.2.0
+workflows:
+  default:
+    jobs:
+      - deploy_dev:
+          context:
+            - covid
+      - hold_dev:
+          type: approval
+          requires: deploy_dev
+      - deploy_prod:
+          context:
+            - covid
+          requires: hold_dev
+
+jobs:
+  deploy_dev:
+    docker:
+      - image: docker.mirror.hashicorp.services/hashicorp/terraform:light
+    steps:
+      - checkout
+      - deploy_stack:
+          stage: dev
+  deploy_prod:
+    docker:
+      - image: docker.mirror.hashicorp.services/hashicorp/terraform:light
+    steps:
+      - checkout
+      - deploy_stack:
+          stage: prod
+
+
+commands:
+  deploy_stack:
+    description: Deploys the stack to target GCP Project
+    parameters:
+      stage:
+        description: Stage of Project Deployment
+        type: string
+        default: dev
+    steps:
+      - run:
+          name: Save GCP Credentials
+          command: echo "${<< parameters.stage >>_sa_key}" > ./sa_credentials.json
+      - run:
+          name: Init Backend
+          command: |
+            export GOOGLE_APPLICATION_CREDENTIALS=./sa_credentials.json
+            terraform init \
+              -backend-config="bucket=covid-<< parameters.stage >>-storage-tf-state" \
+              -backend-config="prefix=covid-storage"
+      - run:
+          name: Validate
+          command: |
+            export GOOGLE_APPLICATION_CREDENTIALS=./sa_credentials.json
+            terraform validate \
+            --auto-approve
+      - run:
+          name: Validate
+          command: |
+            export GOOGLE_APPLICATION_CREDENTIALS=./sa_credentials.json
+            terraform plan \
+            --auto-approve \
+            -var stage=<< parameters.stage >>
+      - run:
+          name: Apply
+          command: |
+            export GOOGLE_APPLICATION_CREDENTIALS=./sa_credentials.json
+            terraform apply \
+            --auto-approve \
+            -var stage=<< parameters.stage >>
