@@ -9,11 +9,13 @@ workflows:
             - covid
       - hold_dev:
           type: approval
-          requires: deploy_dev
+          requires:
+            - deploy_dev
       - deploy_prod:
           context:
             - covid
-          requires: hold_dev
+          requires:
+            - hold_dev
 
 jobs:
   deploy_dev:
