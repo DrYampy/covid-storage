@@ -57,14 +57,12 @@ commands:
           name: Validate
           command: |
             export GOOGLE_APPLICATION_CREDENTIALS=./sa_credentials.json
-            terraform validate \
-            --auto-approve
+            terraform validate
       - run:
-          name: Validate
+          name: Plan
           command: |
             export GOOGLE_APPLICATION_CREDENTIALS=./sa_credentials.json
             terraform plan \
-            --auto-approve \
             -var stage=<< parameters.stage >>
       - run:
           name: Apply
